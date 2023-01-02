@@ -11,8 +11,51 @@ datasource db {
 }
 
 model User {
-    id        Int      @id @default(autoincrement())
+    id               String          @id @default(uuid())
+    createdAt        DateTime        @default(now())
+    email            String          @unique
+    name             String?
+    isAdmin          Boolean         @default(false)
+    image            Bytes?
+    preference       Json
+    writtenPost      Post[]          @relation("WrittenPost")
+    likedPost        Post[]          @relation("LikedPost")
+    UserPreference   UserPreference?
+    userPreferenceId String
+}
+
+model UserPreference {
+    id           String   @id @default(uuid())
+    User         User     @relation(fields: [userId], references: [id])
+    userId       String   @unique
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+    emailUpdates Boolean  @default(false)
+}
+
+// User -> Post 1:n
+
+model Post {
+    id         String     @id @default(uuid())
+    title      String
+    content    String?
+    rating     Float      @default(0.0)
+    published  Boolean    @default(false)
+    author     User       @relation("WrittenPost", fields: [authorId], references: [id])
+    authorId   String
+    likedBy    User?      @relation("LikedPost", fields: [likedById], references: [id])
+    likedById  String?
+    createdAt  DateTime   @default(now())
+    updatedAt  DateTime   @updatedAt
+    Category   Category[]
+    categoryId String?
+}
+
+// Post -> Category m:n
+model Category {
+    id        String   @id @default(uuid())
+    name      String
+    posts     Post[]
     createdAt DateTime @default(now())
-    email     String   @unique
-    name      String?
+    updatedAt DateTime @updatedAt
 }
