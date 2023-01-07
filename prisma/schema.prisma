@@ -2,60 +2,70 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-    id               String          @id @default(uuid())
-    createdAt        DateTime        @default(now())
-    email            String          @unique
-    name             String?
-    isAdmin          Boolean         @default(false)
-    image            Bytes?
-    preference       Json
-    writtenPost      Post[]          @relation("WrittenPost")
-    likedPost        Post[]          @relation("LikedPost")
-    UserPreference   UserPreference?
-    userPreferenceId String
+  id               String          @id @default(uuid())
+  createdAt        DateTime        @default(now())
+  email            String          @unique
+  name             String?
+  age              Int?
+  role             Role            @default(BASIC)
+  image            Bytes?
+  about            Json?
+  writtenPost      Post[]          @relation("WrittenPost")
+  likedPost        Post[]          @relation("LikedPost")
+  userPreference   UserPreference? @relation(fields: [userPreferenceId], references: [id])
+  userPreferenceId String?         @unique
+
+  @@unique([age, name]) //Cannot have two users with the same age and name
+  @@index([email]) //Create an index on the email column
 }
 
 model UserPreference {
-    id           String   @id @default(uuid())
-    User         User     @relation(fields: [userId], references: [id])
-    userId       String   @unique
-    createdAt    DateTime @default(now())
-    updatedAt    DateTime @updatedAt
-    emailUpdates Boolean  @default(false)
+  id           String   @id @default(uuid())
+  User         User?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  emailUpdates Boolean  @default(false)
+  weeklyDigest Boolean  @default(true)
 }
 
 // User -> Post 1:n
 
 model Post {
-    id         String     @id @default(uuid())
-    title      String
-    content    String?
-    rating     Float      @default(0.0)
-    published  Boolean    @default(false)
-    author     User       @relation("WrittenPost", fields: [authorId], references: [id])
-    authorId   String
-    likedBy    User?      @relation("LikedPost", fields: [likedById], references: [id])
-    likedById  String?
-    createdAt  DateTime   @default(now())
-    updatedAt  DateTime   @updatedAt
-    Category   Category[]
-    categoryId String?
+  id          String     @id @default(uuid())
+  title       String
+  content     String?
+  rating      Float      @default(0.0)
+  published   Boolean    @default(false)
+  author      User       @relation("WrittenPost", fields: [authorId], references: [id])
+  authorId    String
+  likedBy     User?      @relation("LikedPost", fields: [likedById], references: [id])
+  likedById   String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  cateogories Category[]
+
+  // @@id([authorId, title]) //
 }
 
 // Post -> Category m:n
 model Category {
-    id        String   @id @default(uuid())
-    name      String
-    posts     Post[]
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  id        String   @id @default(uuid())
+  name      String
+  posts     Post[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  BASIC
+  ADMIN
 }
